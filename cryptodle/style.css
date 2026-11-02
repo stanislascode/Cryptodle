@@ -224,3 +224,6 @@ footer { color: var(--muted); font-size: 12px; text-align: center; padding: 16px
   .cell .avatar { width: 44px; height: 44px; font-size: 15px; }
   .paper-row .cell.wide { width: 170px; }
 }
+
+.back { width: 100%; max-width: 760px; margin: 14px 0 -8px; position: relative; z-index: 5; color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 600; }
+.back:hover { color: var(--accent); }

@@ -3,108 +3,128 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cryptodle</title>
-<meta name="description" content="Guess the Aarhus cryptographer of the day.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+<title>Crypto Arcade</title>
+<meta name="description" content="Small browser games about the Aarhus crypto group.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f1e7;
+    --ink: #1c1a17;
+    --muted: #6f685d;
+    --card-radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 0 16px;
+  }
+  header { text-align: center; padding: 56px 0 34px; }
+  h1 {
+    margin: 0; font-family: "JetBrains Mono", monospace; font-weight: 800;
+    font-size: clamp(38px, 9vw, 64px); letter-spacing: -.02em;
+  }
+  h1 span { color: #e0603a; }
+  .sub { margin: 10px 0 0; color: var(--muted); font-size: 17px; }
+
+  .grid {
+    width: 100%; max-width: 1040px;
+    display: grid; gap: 22px;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  }
+  .card {
+    position: relative; display: flex; flex-direction: column;
+    border-radius: var(--card-radius); overflow: hidden; text-decoration: none; color: inherit;
+    background: #fff; border: 2px solid var(--ink);
+    box-shadow: 0 6px 0 var(--ink);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  a.card:hover { transform: translateY(-4px); box-shadow: 0 10px 0 var(--ink); }
+  a.card:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--ink); }
+  .art {
+    aspect-ratio: 4 / 3; display: grid; place-items: center;
+    border-bottom: 2px solid var(--ink); overflow: hidden;
+  }
+  .art svg { width: 78%; height: auto; }
+  .label { padding: 14px 16px 16px; }
+  .label h2 { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
+  .label p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
+  .badge {
+    position: absolute; top: 12px; right: 12px; z-index: 1;
+    font: 700 11px "JetBrains Mono", monospace; letter-spacing: .05em; text-transform: uppercase;
+    background: #fff; border: 2px solid var(--ink); border-radius: 999px; padding: 3px 9px;
+  }
+  .card.soon { opacity: .6; border-style: dashed; box-shadow: none; }
+  .card.soon .art { border-bottom-style: dashed; }
+  .card.soon .q { font: 800 64px "JetBrains Mono", monospace; color: rgba(28,26,23,.25); }
+
+  footer { margin-top: auto; padding: 48px 0 28px; color: var(--muted); font-size: 13px; text-align: center; }
+</style>
 </head>
 <body>
-<div class="bg" aria-hidden="true"></div>
-
-<header class="top">
-  <button class="icon-btn" id="btn-help" aria-label="How to play" title="How to play">?</button>
-  <a class="logo" href="./">
-    <span class="logo-key">0x</span>CRYPTO<span class="logo-dle">DLE</span>
-  </a>
-  <button class="icon-btn" id="btn-stats" aria-label="Statistics" title="Statistics">
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg>
-  </button>
+<header>
+  <h1>crypto<span>.</span>arcade</h1>
+  <p class="sub">Tiny games about the Aarhus crypto group.</p>
 </header>
-<p class="tagline">Guess today's member of the Aarhus crypto group, past or present.</p>
 
-<nav class="modes" role="tablist">
-  <button class="mode active" data-mode="classic" role="tab">
-    <span class="mode-ico">◆</span><span>Classic</span><span class="mode-done" hidden>✓</span>
-  </button>
-  <button class="mode" data-mode="paper" role="tab">
-    <span class="mode-ico">✎</span><span>ePrint</span><span class="mode-done" hidden>✓</span>
-  </button>
-</nav>
+<main class="grid" id="grid"></main>
 
-<main id="game">
-  <section class="panel intro" id="intro"></section>
+<footer>Made in Aarhus · new games now and then</footer>
 
-  <div class="guess-bar" id="guess-bar">
-    <div class="search">
-      <input id="guess-input" type="text" autocomplete="off" spellcheck="false" placeholder="Type a name…" aria-label="Type a name">
-      <ul id="suggestions" role="listbox" hidden></ul>
-    </div>
-    <button id="guess-btn" class="go" aria-label="Guess">➜</button>
-  </div>
-  <p class="counter" id="counter"></p>
+<script>
+/* ---------------------------------------------------------------------------
+   Liste des jeux. Pour en ajouter un : crée son dossier (ex. "monjeu/index.html")
+   puis ajoute une entrée ici. Sans "href", la carte s'affiche en « Coming soon ».
+--------------------------------------------------------------------------- */
+const GAMES = [
+  {
+    title: "Cryptodle",
+    text: "Guess today's cryptographer from their role, topics, PhD and ePrints.",
+    href: "cryptodle/",
+    color: "#7cf3c4",
+    badge: "Daily",
+    art: "cryptodle",
+  },
+  { title: "Coming soon", text: "Another game is being cooked up.", color: "#f6c177" },
+  { title: "Coming soon", text: "Ideas welcome at the coffee machine.", color: "#8aa8ff" },
+];
 
-  <div class="hints" id="hints"></div>
+const ART = {
+  // petite grille de cases façon Cryptodle
+  cryptodle: (() => {
+    const rows = [
+      ["#d04f4f", "#3fc07a", "#f0a83a", "#d04f4f", "#3fc07a"],
+      ["#3fc07a", "#3fc07a", "#f0a83a", "#d04f4f", "#3fc07a"],
+      ["#3fc07a", "#3fc07a", "#3fc07a", "#3fc07a", "#3fc07a"],
+    ];
+    let s = '<svg viewBox="0 0 250 160" aria-hidden="true">';
+    rows.forEach((r, y) => r.forEach((c, x) => {
+      s += `<rect x="${x * 50 + 3}" y="${y * 52 + 3}" width="44" height="46" rx="7" fill="${c}" stroke="#1c1a17" stroke-width="3"/>`;
+    }));
+    s += '<path d="M175 40 l12 -16 l12 16 z" fill="rgba(0,0,0,.3)"/>';
+    s += '<path d="M25 30 l12 16 l12 -16 z" fill="rgba(0,0,0,.3)" transform="translate(0,-4)"/>';
+    return s + "</svg>";
+  })(),
+};
 
-  <section class="board-wrap" id="board-wrap">
-    <div class="board" id="board"></div>
-  </section>
-
-  <section class="panel win" id="win" hidden></section>
-
-  <p class="yesterday" id="yesterday"></p>
-
-  <div class="practice-row">
-    <label class="switch"><input type="checkbox" id="practice"><span></span> Unlimited mode</label>
-    <button class="link-btn" id="new-practice" hidden>New random target ↻</button>
-  </div>
-</main>
-
-<footer>
-  <span>Data from public pages (group site, personal pages, IACR ePrint), checked <span id="data-date"></span>.</span>
-  <span>Daily resets at midnight, Aarhus time.</span>
-</footer>
-
-<dialog id="dlg-help" class="dlg">
-  <form method="dialog"><button class="x" aria-label="Close">×</button></form>
-  <h2>How to play</h2>
-  <p>Every day there is a new mystery person — a professor, postdoc, PhD student, alumnus or visitor of the Aarhus crypto group. Same puzzle for everyone.</p>
-  <h3>Classic</h3>
-  <p>Guess anyone. Each column compares your guess with the target:</p>
-  <div class="legend">
-    <span class="sw ok"></span> correct
-    <span class="sw part"></span> partial overlap / same family
-    <span class="sw ko"></span> wrong
-    <span class="sw ko arrow">▲</span> the target's value is higher
-  </div>
-  <dl class="cols">
-    <dt>Role</dt><dd>Current position. Orange = same family (faculty · researcher · student).</dd>
-    <dt>At Aarhus</dt><dd>Current member, former member, visiting now, former visitor.</dd>
-    <dt>Aarhus path</dt><dd>What they have been at Aarhus: student, PhD, postdoc, faculty, visitor, staff.</dd>
-    <dt>Research</dt><dd>Main topics (up to three).</dd>
-    <dt>Based in</dt><dd>Country of the current employer.</dd>
-    <dt>PhD from</dt><dd>Country of the PhD institution (or where the PhD is in progress).</dd>
-    <dt>PhD year</dt><dd>Year obtained. “Ongoing” counts as later than any year.</dd>
-    <dt>ePrints</dt><dd>Distinct IACR ePrint deposits.</dd>
-  </dl>
-  <h3>ePrint</h3>
-  <p>Read a real ePrint title and name one of its authors from the group. Orange means your guess has co-authored with one of the authors. Hints unlock as you go.</p>
-</dialog>
-
-<dialog id="dlg-stats" class="dlg">
-  <form method="dialog"><button class="x" aria-label="Close">×</button></form>
-  <h2>Statistics · <span id="stats-mode"></span></h2>
-  <div class="stat-grid" id="stat-grid"></div>
-  <h3>Guess distribution</h3>
-  <div class="dist" id="dist"></div>
-  <p class="small">Stored in this browser only.</p>
-</dialog>
-
-<div class="toast" id="toast" role="status"></div>
-
-<script src="data.js"></script>
-<script src="app.js"></script>
+const grid = document.getElementById("grid");
+for (const g of GAMES) {
+  const card = document.createElement(g.href ? "a" : "div");
+  card.className = "card" + (g.href ? "" : " soon");
+  if (g.href) card.href = g.href;
+  card.innerHTML = `
+    ${g.badge ? `<span class="badge">${g.badge}</span>` : ""}
+    <div class="art" style="background:${g.color}">${g.art && ART[g.art] ? ART[g.art] : '<span class="q">?</span>'}</div>
+    <div class="label"><h2>${g.title}</h2><p>${g.text}</p></div>`;
+  grid.append(card);
+}
+</script>
 </body>
 </html>
